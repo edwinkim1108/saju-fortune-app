@@ -39,11 +39,9 @@ def 오행_카운트(사주):
             elements[오행_map[ch]] += 1
     return elements
 
-# ================= 강약 =================
 def 강약_분석(elements):
     strong = max(elements, key=elements.get)
     weak = min(elements, key=elements.get)
-
     imbalance = elements[strong] - elements[weak]
 
     if imbalance >= 3:
@@ -55,74 +53,78 @@ def 강약_분석(elements):
 
     return strong, weak, level
 
+# ================= 전문가 해설 =================
+def 오행_해설(elements, strong, weak):
+    detail = {
+        "목": "목은 성장과 확장을 의미하며 이해력과 사고력과 연결됩니다.",
+        "화": "화는 집중력과 에너지로 몰입 학습과 관련됩니다.",
+        "토": "토는 안정성과 반복으로 꾸준함과 관련됩니다.",
+        "금": "금은 규칙과 구조로 문제풀이 능력과 연결됩니다.",
+        "수": "수는 기억과 사고로 암기력과 관련됩니다."
+    }
+
+    return f"""
+이 사주는 {strong} 기운이 강하게 작용하는 구조입니다.
+
+👉 {strong} 특징: {detail[strong]}
+
+반면 {weak} 기운이 부족하여 해당 영역은 약점이 될 수 있습니다.
+
+👉 {weak} 부족 영향: {detail[weak]}
+
+따라서 강점을 활용하고 약점을 보완하는 전략이 중요합니다.
+"""
+
+def 학습_스토리(strong, weak):
+    return f"""
+이 학생은 {strong} 중심 학습 구조입니다.
+
+👉 {strong} 기반 공부에서는 빠르게 성과가 나오지만  
+👉 {weak} 기반 공부에서는 효율이 떨어질 수 있습니다.
+
+따라서 맞는 공부법 선택이 성적을 좌우합니다.
+"""
+
+def 총평(strong, weak):
+    return f"""
+이 사주는 {strong} 중심으로 사고가 이루어집니다.
+
+강점을 활용하면 빠른 성적 상승이 가능하지만  
+{weak} 부족은 장기적인 안정성을 떨어뜨릴 수 있습니다.
+
+👉 결론: 강점 활용 + 약점 보완이 핵심
+"""
+
+def 행동_가이드(strong, weak):
+    guide = {
+        "목":"개념 중심 학습",
+        "화":"짧고 강한 집중",
+        "토":"반복과 꾸준함",
+        "금":"문제풀이 중심",
+        "수":"암기 반복"
+    }
+
+    return f"""
+✔ 추천 공부법: {guide[strong]}
+
+✔ 보완 전략: {guide[weak]}
+
+👉 강점 70%, 약점 30% 전략이 가장 효율적입니다.
+"""
+
 # ================= 학습 성향 =================
 def 학습_성향(strong):
     return {
-        "목":"이해 중심 학습형 (개념 연결 능력 우수)",
-        "화":"몰입형 학습 (단기 집중력 매우 강함)",
-        "토":"꾸준형 학습 (장기 성적 상승형)",
-        "금":"문제풀이형 (시험 대응 능력 우수)",
-        "수":"암기+이해 혼합형 (균형형 학습)"
+        "목":"이해형",
+        "화":"몰입형",
+        "토":"꾸준형",
+        "금":"문제풀이형",
+        "수":"암기형"
     }.get(strong)
-
-# ================= 십성 해석 =================
-def 십성_해석(strong):
-    return {
-        "목":"인성 발달 → 이해력, 학습 흡수력 높음",
-        "화":"식상 발달 → 문제풀이, 표현력 강함",
-        "토":"재성 발달 → 결과 중심, 성적 집착형",
-        "금":"관성 발달 → 집중력, 관리 능력 우수",
-        "수":"인성+식상 혼합 → 균형형 인재"
-    }.get(strong)
-
-# ================= 과목 연결 =================
-def 과목_추천(strong):
-    return {
-        "목":"국어/영어 독해형 과목 강점",
-        "화":"발표/토론/회화형 과목 강점",
-        "토":"암기형 과목 안정적",
-        "금":"수학/과학 문제풀이 강점",
-        "수":"전과목 균형형"
-    }.get(strong)
-
-# ================= 대운 =================
-def 대운_분석():
-    return [
-        "10~19세: 학습 기반 형성기",
-        "20~29세: 진로 결정기",
-        "30~39세: 성장 및 확장기",
-        "40~49세: 안정 및 축적기"
-    ]
-
-# ================= 오늘 운 =================
-def 오늘_운():
-    return random.randint(60,95)
-
-# ================= PDF =================
-def create_pdf(name, text):
-    buffer = BytesIO()
-    font_path = os.path.join(os.getcwd(), "NanumGothic.ttf")
-
-    if not os.path.exists(font_path):
-        return None
-
-    pdfmetrics.registerFont(TTFont("Nanum", font_path))
-
-    doc = SimpleDocTemplate(buffer)
-    styles = getSampleStyleSheet()
-    styles["Normal"].fontName = "Nanum"
-
-    text = text.replace("\n","<br/>")
-    content = [Paragraph(text, styles["Normal"])]
-
-    doc.build(content)
-    buffer.seek(0)
-
-    return buffer
 
 # ================= UI =================
 st.set_page_config(page_title="학생 사주 분석 앱", layout="centered")
-st.title("📚 학생 사주 기반 학습 분석 앱")
+st.title("📚 학생 사주 기반 학습 분석")
 
 with st.form("form"):
     year = st.number_input("출생년도", 2000, 2025, 2010)
@@ -140,58 +142,31 @@ if submit:
     st.subheader("🔮 사주팔자")
     st.write(f"{년주} / {월주} / {일주} / {시주}")
 
-    # 오행
     elements = 오행_카운트(사주)
     strong, weak, level = 강약_분석(elements)
 
     st.subheader("🌿 오행 분석")
     st.write(elements)
-    st.write(f"💪 강한 오행: {strong}")
-    st.write(f"⚠️ 약한 오행: {weak}")
-    st.write(f"📊 균형 상태: {level}")
+    st.write(f"강한 오행: {strong}")
+    st.write(f"약한 오행: {weak}")
+    st.write(f"균형 상태: {level}")
 
-    # 학습
     st.subheader("🧠 학습 성향")
     st.success(학습_성향(strong))
 
-    # 십성
-    st.subheader("⚡ 십성 해석")
-    st.info(십성_해석(strong))
+    st.subheader("📖 오행 해설")
+    st.info(오행_해설(elements, strong, weak))
 
-    # 과목
-    st.subheader("📚 과목 추천")
-    st.write(과목_추천(strong))
+    st.subheader("🧠 학습 해설")
+    st.success(학습_스토리(strong, weak))
 
-    # 대운
-    st.subheader("🌊 대운 흐름")
-    for d in 대운_분석():
-        st.write(d)
+    st.subheader("🔮 총평")
+    st.warning(총평(strong, weak))
 
-    # 오늘 운
+    st.subheader("📌 행동 가이드")
+    st.error(행동_가이드(strong, weak))
+
     st.subheader("📊 오늘 공부 운")
-    today = 오늘_운()
+    today = random.randint(60,95)
     st.metric("집중력", f"{today}%")
     st.progress(today)
-
-    # PDF
-    text = f"""
-    이름: {name}
-
-    사주: {사주}
-    오행: {elements}
-
-    강한 오행: {strong}
-    약한 오행: {weak}
-    균형: {level}
-
-    학습 성향: {학습_성향(strong)}
-    십성: {십성_해석(strong)}
-    과목: {과목_추천(strong)}
-    """
-
-    pdf = create_pdf(name, text)
-
-    if pdf:
-        st.download_button("📄 PDF 다운로드", pdf, file_name="학생_리포트.pdf")
-    else:
-        st.error("⚠️ NanumGothic.ttf 필요")
