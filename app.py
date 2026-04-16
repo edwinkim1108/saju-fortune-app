@@ -1,164 +1,128 @@
 import streamlit as st
 import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
+from datetime import datetime
 
-# ================= 1. 고급 명리 데이터 시스템 =================
-ELEMENT_INFO = {
-    "목": {"color": "#2ECC71", "desc": "추진력과 성장"},
-    "화": {"color": "#E74C3C", "desc": "열정과 표현력"},
-    "토": {"color": "#F1C40F", "desc": "안정감과 신뢰"},
-    "금": {"color": "#95A5A6", "desc": "결단력과 원칙"},
-    "수": {"color": "#3498DB", "desc": "지혜와 유연함"}
+# ================= 1. 데이터베이스 및 알고리즘 =================
+# 점신 스타일의 상세 해설 DB
+FORTUNE_DB = {
+    "오늘의행운": {
+        "색상": ["#FFFFFF (순수와 시작)", "#2C3E50 (신뢰와 안정)", "#E74C3C (열정과 에너지)", "#F1C40F (희망과 풍요)"],
+        "숫자": ["1", "3", "7", "8"],
+        "음식": ["따뜻한 차", "견과류", "신선한 샐러드", "매콤한 요리"],
+        "방향": ["동쪽 (새로운 기운)", "남쪽 (활기찬 기운)", "북쪽 (차분한 기운)"]
+    },
+    "월간운세": {
+        "총평": "이번 달은 수(水)의 기운이 강해지는 시기로, 급한 결정보다는 내실을 다지는 것이 좋습니다.",
+        "주의": "대인관계에서 오해가 생길 수 있으니 경청하는 자세가 필요합니다."
+    }
 }
 
-# 십성 매핑 함수 (변수명 규칙 준수: il_gan)
-def get_ten_gods(il_gan, target):
-    mapping = {
-        ("금", "수"): "식상 (창의력/표현)",
-        ("금", "화"): "관성 (규율/명예)",
-        ("금", "목"): "재성 (결과/현실)",
-        ("금", "토"): "인성 (수용/학습)",
-        ("금", "금"): "비겁 (주관/경쟁)",
-        ("목", "화"): "식상 (창의력/표현)",
-        ("목", "금"): "관성 (규율/명예)",
-        ("목", "토"): "재성 (결과/현실)",
-        ("목", "수"): "인성 (수용/학습)",
-        ("목", "목"): "비겁 (주관/경쟁)",
-        # 타 오행은 확장 가능
-    }
-    return mapping.get((il_gan, target), "기타 기운")
+ELEMENT_STYLES = {
+    "목": {"color": "#2ECC71", "label": "창의와 시작"},
+    "화": {"color": "#E74C3C", "label": "열정과 표현"},
+    "토": {"color": "#F1C40F", "label": "안정과 신뢰"},
+    "금": {"color": "#95A5A6", "label": "결단과 원칙"},
+    "수": {"color": "#3498DB", "label": "지혜와 유연"}
+}
 
 # ================= 2. 시각화 컴포넌트 =================
-class SajuVisualizer:
+class JeomsinVisualizer:
     @staticmethod
-    def draw_element_pie(elements):
-        # 오행 분포 파이 차트
-        df = pd.DataFrame(list(elements.items()), columns=['오행', '점수'])
-        fig = px.pie(df, values='점수', names='오행', 
-                     color='오행', 
-                     color_discrete_map={k: v['color'] for k, v in ELEMENT_INFO.items()},
-                     hole=0.5)
-        fig.update_traces(textinfo='percent+label')
-        fig.update_layout(showlegend=False, height=350, margin=dict(t=30, b=30, l=30, r=30))
-        return fig
-
-    @staticmethod
-    def draw_strength_gauge(score):
-        # 신강/신약 게이지 (이미지 느낌 재현)
-        fig = go.Figure(go.Indicator(
-            mode = "gauge+number",
-            value = score,
-            domain = {'x': [0, 1], 'y': [0, 1]},
-            title = {'text': "자아 에너지 강도", 'font': {'size': 18}},
-            gauge = {
-                'axis': {'range': [-50, 50], 'tickwidth': 1},
-                'bar': {'color': "#2C3E50"},
-                'bgcolor': "white",
-                'borderwidth': 2,
-                'bordercolor': "#D5DBDB",
-                'steps': [
-                    {'range': [-50, -15], 'color': '#EBF5FB'},
-                    {'range': [-15, 15], 'color': '#F2F4F4'},
-                    {'range': [15, 50], 'color': '#FEF9E7'}
-                ],
-            }
+    def draw_radar(elements):
+        fig = go.Figure()
+        fig.add_trace(go.Scatterpolar(
+            r=list(elements.values()),
+            theta=list(elements.keys()),
+            fill='toself',
+            fillcolor='rgba(52, 152, 219, 0.2)',
+            line=dict(color='#3498DB', width=2)
         ))
-        fig.update_layout(height=280, margin=dict(t=50, b=20, l=30, r=30))
+        fig.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 60])),
+            showlegend=False, height=300, margin=dict(t=20, b=20, l=40, r=40)
+        )
         return fig
 
-# ================= 3. 해설 생성 엔진 =================
-class AnalysisEngine:
-    def __init__(self, name, elements, il_gan):
-        self.name = name
-        self.elements = elements
-        self.il_gan = il_gan
-
-    def generate_report(self):
-        strong_elem = max(self.elements, key=self.elements.get)
-        ten_god_name = get_ten_gods(self.il_gan, strong_elem)
-        
-        summary = f"### 🌟 {self.name} 학생의 타고난 성향: **[{ten_god_name}]**"
-        
-        detail = f"""
-        {self.name} 학생은 **{self.il_gan}**의 본질을 가지고 태어났으며, 현재 사주에서 **{strong_elem}**의 기운이 가장 두드러집니다.
-        
-        이미지 분석 결과와 같이, 이러한 구조는 다음과 같은 학습 특징을 보입니다:
-        
-        1. **학습 스타일**: {ELEMENT_INFO[strong_elem]['desc']} 능력이 탁월합니다.
-        2. **강점**: 주도적으로 문제를 해결하려는 의지가 강하며 목표 의식이 뚜렷합니다.
-        3. **보완점**: {min(self.elements, key=self.elements.get)} 기운이 상대적으로 약해 뒷심이 부족할 수 있으니 체력 관리가 중요합니다.
-        """
-        return summary, detail
-
-# ================= 4. 메인 어플리케이션 UI =================
+# ================= 3. 메인 어플리케이션 UI =================
 def main():
-    st.set_page_config(page_title="사주 학습 컨설팅 프로", layout="wide")
+    st.set_page_config(page_title="점신 스타일 통합 사주", layout="wide")
 
-    # CSS 디자인
+    # 고퀄리티 CSS 커스텀
     st.markdown("""
         <style>
-        .report-box {
-            padding: 25px;
-            border-radius: 15px;
-            background-color: white;
-            border: 1px solid #EAECEE;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        .main { background-color: #F8F9FA; }
+        .card {
+            background-color: white; padding: 25px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
         }
-        .stButton>button {
-            width: 100%;
-            border-radius: 10px;
-            height: 3em;
-            background-color: #2C3E50;
-            color: white;
+        .lucky-item {
+            display: inline-block; padding: 8px 15px; border-radius: 10px;
+            background-color: #F1F2F6; margin-right: 10px; font-weight: bold;
         }
+        .section-title { font-size: 22px; font-weight: bold; color: #2C3E50; margin-bottom: 15px; }
         </style>
     """, unsafe_allow_html=True)
 
-    st.title("📚 AI 사주 기반 프리미엄 학습 분석")
-    st.write("이미지 기반 고도화 알고리즘이 적용된 전문가용 리포트입니다.")
+    # 헤더 섹션
+    st.title("🔮 통합 명리 컨설팅 리포트 (Pro)")
+    st.write(f"오늘의 날짜: {datetime.now().strftime('%Y년 %m월 %d일')}")
 
-    # 사이드바 입력
     with st.sidebar:
-        st.header("👤 학생 정보 입력")
-        name = st.text_input("이름", "김준우")
-        st.date_input("생년월일")
-        st.time_input("출생시간")
-        il_gan_input = st.selectbox("본인의 일간(본질)", ["금", "목", "화", "토", "수"])
-        submit = st.button("전문 분석 시작")
+        st.header("👤 사용자 정보")
+        name = st.text_input("성함", "김준우")
+        gender = st.radio("성별", ["남성", "여성"])
+        birth_date = st.date_input("생년월일")
+        birth_time = st.time_input("출생시간")
+        il_gan = st.selectbox("일간(본질) 선택", ["금", "수", "목", "화", "토"])
+        st.divider()
+        st.button("운세 새로고침")
 
-    if submit:
-        # 가상 분석 데이터 (이미지상의 수(水) 과다 및 신약 사주 케이스 재현)
-        mock_elements = {"수": 52, "금": 18, "화": 12, "토": 10, "목": 8}
-        strength_score = -12  # 신약 쪽으로 치우친 중립
+    # 가상 데이터 (점신 분석 결과 재현)
+    mock_elements = {"목": 10, "화": 15, "토": 10, "금": 12, "수": 53}
+    
+    # 레이아웃 배치
+    col1, col2 = st.columns([1, 1.3])
+
+    with col1:
+        # 섹션 1: 오늘의 행운
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">🍀 오늘의 행운 처방</div>', unsafe_allow_html=True)
+        cols = st.columns(2)
+        cols[0].write(f"🎨 **행운의 색:** \n{FORTUNE_DB['오늘의행운']['색상'][2]}")
+        cols[1].write(f"🔢 **행운의 숫자:** \n{FORTUNE_DB['오늘의행운']['숫자'][2]}")
+        cols[0].write(f"🍲 **행운의 음식:** \n{FORTUNE_DB['오늘의행운']['음식'][0]}")
+        cols[1].write(f"🧭 **행운의 방향:** \n{FORTUNE_DB['오늘의행운']['방향'][0]}")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # 섹션 2: 오행 밸런스
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📊 오행 에너지 분석</div>', unsafe_allow_html=True)
+        st.plotly_chart(JeomsinVisualizer.draw_radar(mock_elements), use_container_width=True)
+        st.write(f"현재 **수(水)** 기운이 매우 강합니다. 이는 지혜를 뜻하지만, 동시에 생각이 많아질 수 있음을 의미합니다.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col2:
+        # 섹션 3: 종합 사주 풀이
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown(f'<div class="section-title">📜 {name}님의 종합 사주 리포트</div>', unsafe_allow_html=True)
+        st.write(f"**[{il_gan}]**의 기운을 타고난 당신은 정교한 분석력과 논리적인 사고를 가졌습니다.")
         
-        engine = AnalysisEngine(name, mock_elements, il_gan_input)
-        summary, detail = engine.generate_report()
+        tab1, tab2, tab3 = st.tabs(["💡 성향/학습", "💰 재물/명예", "📅 월간 흐름"])
+        
+        with tab1:
+            st.info(f"**[식신/상관 발달형]**\n\n두뇌 회전이 매우 빠릅니다. {name}님은 단순 반복보다는 원리를 파악하고 이를 응용하는 데 탁월한 능력을 보입니다. 공부나 업무 시 '왜?'라는 질문에 답을 찾아가는 과정이 반드시 필요합니다.")
+        with tab2:
+            st.success("**[재물운/사회운]**\n\n현재 운의 흐름상 전문 기술이나 자격증을 활용한 재물 취득이 유리합니다. 조직 내에서는 기획이나 전략 파트에서 빛을 발할 사주입니다.")
+        with tab3:
+            st.warning(f"**[2026년 {datetime.now().month}월 운세]**\n\n{FORTUNE_DB['월간운세']['총평']}\n\n* **특히 주의할 날:** 7일, 19일 (감정적인 지출 주의)")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        # 레이아웃 구성
-        col1, col2 = st.columns([1, 1.2])
-
-        with col1:
-            st.markdown('<div class="report-box">', unsafe_allow_html=True)
-            st.subheader("🎯 오행 밸런스 결과")
-            st.plotly_chart(SajuVisualizer.draw_element_pie(mock_elements), use_container_width=True)
-            st.plotly_chart(SajuVisualizer.draw_strength_gauge(strength_score), use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with col2:
-            st.markdown('<div class="report-box">', unsafe_allow_html=True)
-            st.markdown(summary)
-            st.markdown(detail)
-            st.divider()
-            
-            # 이미지 스타일의 하단 팁
-            st.info(f"💡 **전문가 제안**: {name} 학생은 '하얀 쥐'처럼 영특하지만 기운이 한곳으로 쏠려 있습니다. 수(水)의 지혜를 발휘할 수 있는 토론식 수업을 추천합니다.")
-            
-            # 행동 가이드
-            guide_col1, guide_col2 = st.columns(2)
-            guide_col1.success("**추천 과목**\n\n언어, 사회, 예술")
-            guide_col2.warning("**환경 조성**\n\n습도 조절 및 파란색 소품")
-            st.markdown('</div>', unsafe_allow_html=True)
+        # 섹션 4: 전문가 제안 (점신 스타일)
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">👨‍🏫 전문가 총평</div>', unsafe_allow_html=True)
+        st.write(f"\"{name}님은 맑은 물속에 담긴 날카로운 칼과 같습니다. 영리함은 갖췄으나 스스로를 너무 검열하는 경향이 있습니다. 가끔은 '그냥 하는' 무심함이 성취를 앞당길 것입니다.\"")
+        st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
