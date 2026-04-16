@@ -1,9 +1,13 @@
 import streamlit as st
-from datetime import datetime
 import random
 from io import BytesIO
+import os
+
+# PDF
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 # ================= 로그인 =================
 if "login" not in st.session_state:
@@ -56,8 +60,8 @@ def 공부_풀이(ilgan):
 # ================= 약점 =================
 def 약점_분석(ilgan):
     return {
-        "병":"지루함 약함",
-        "계":"이해 부족 위험",
+        "병":"지루함에 약함",
+        "계":"이해 없이 암기 위험",
         "경":"개념 부족 시 약함",
         "을":"속도 느림"
     }.get(ilgan, "균형형")
@@ -68,32 +72,53 @@ def 부모_코칭(ilgan):
         "갑":["목표 중심 지도","자율성 부여"],
         "을":["습관 형성 중요","꾸준함 칭찬"],
         "병":["짧은 목표 반복","칭찬 필수"],
-        "경":["문제풀이 강조","경쟁 환경"],
+        "경":["문제풀이 강조","경쟁 환경 활용"],
         "계":["암기 환경 제공","반복 체크"]
-    }.get(ilgan, ["기본기 강화","루틴 유지"])
+    }.get(ilgan, ["루틴 유지","기본기 강화"])
 
 # ================= 성적 전략 =================
 def 성적_상승_전략(ilgan):
     return {
-        "경":"문제풀이 70%",
-        "계":"암기 집중 전략",
-        "병":"짧고 강하게",
-        "을":"꾸준함 유지",
-        "임":"이해 중심"
+        "경":"문제풀이 70% + 개념 30%",
+        "계":"암기 과목 집중 공략",
+        "병":"짧고 강하게 공부",
+        "을":"꾸준함 유지 핵심",
+        "임":"이해 중심 학습"
     }.get(ilgan, "기본기 + 반복")
 
-# ================= PDF =================
+# ================= PDF (🔥 완전 해결 버전) =================
 def create_pdf(name, text):
     buffer = BytesIO()
+
+    # 🔥 폰트 경로 자동 처리
+    font_path = os.path.join(os.getcwd(), "NanumGothic.ttf")
+
+    # 🔥 폰트 존재 확인 (없으면 에러 방지)
+    if not os.path.exists(font_path):
+        return None
+
+    pdfmetrics.registerFont(TTFont("Nanum", font_path))
+
     doc = SimpleDocTemplate(buffer)
     styles = getSampleStyleSheet()
 
+    styles["Normal"].fontName = "Nanum"
+    styles["Title"].fontName = "Nanum"
+    styles["BodyText"].fontName = "Nanum"
+
     content = []
+
     content.append(Paragraph(f"{name} 학생 리포트", styles["Title"]))
+    content.append(Paragraph("<br/>", styles["Normal"]))
+
+    # 줄바꿈 처리
+    text = text.replace("\n", "<br/>")
+
     content.append(Paragraph(text, styles["BodyText"]))
 
     doc.build(content)
     buffer.seek(0)
+
     return buffer
 
 # ================= UI =================
@@ -122,11 +147,13 @@ if submit:
     # 풀이
     st.subheader("🔍 학습 능력 풀이")
     analysis = 공부_풀이(일간)
-    st.write(f"핵심: {analysis['core']}")
-    st.write(f"특징: {analysis['study']}")
-    st.write(f"적용: {analysis['real']}")
+    st.write(f"🔹 핵심: {analysis['core']}")
+    st.write(f"🔹 특징: {analysis['study']}")
+    st.write(f"🔹 적용: {analysis['real']}")
 
-    # 공부운
+    st.warning("👉 올바른 공부 방법 적용 시 성적 상승 속도가 빠른 유형입니다.")
+
+    # 컨디션
     st.subheader("📊 오늘 컨디션")
     집중 = random.randint(60,95)
     암기 = random.randint(50,90)
@@ -140,15 +167,15 @@ if submit:
     st.success(성적_상승_전략(일간))
 
     # 약점
-    st.subheader("⚠️ 약점")
+    st.subheader("⚠️ 학습 약점")
     st.error(약점_분석(일간))
 
-    # 부모
+    # 부모 코칭
     st.subheader("👨‍👩‍👧 부모 코칭")
     for c in 부모_코칭(일간):
         st.write(f"👉 {c}")
 
-    # 한줄 전략
+    # 오늘 전략
     전략 = random.choice([
         "복습 중심 학습",
         "문제풀이 집중",
@@ -156,18 +183,28 @@ if submit:
     ])
     st.info(f"👉 오늘 전략: {전략}")
 
-    # PDF
+    # PDF 내용
     text = f"""
-    유형: {공부_타입(일간)}
-    전략: {성적_상승_전략(일간)}
+    [학생 분석]
+
+    공부 유형: {공부_타입(일간)}
+
+    핵심: {analysis['core']}
+    특징: {analysis['study']}
+    적용: {analysis['real']}
+
+    성적 전략: {성적_상승_전략(일간)}
     약점: {약점_분석(일간)}
     """
 
     pdf = create_pdf(name, text)
 
-    st.download_button(
-        label="📄 PDF 다운로드",
-        data=pdf,
-        file_name=f"{name}_리포트.pdf",
-        mime="application/pdf"
-    )
+    if pdf:
+        st.download_button(
+            label="📄 PDF 리포트 다운로드",
+            data=pdf,
+            file_name=f"{name}_리포트.pdf",
+            mime="application/pdf"
+        )
+    else:
+        st.error("⚠️ NanumGothic.ttf 폰트 파일을 추가해야 PDF가 정상 생성됩니다.")
