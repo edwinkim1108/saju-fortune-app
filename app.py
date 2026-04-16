@@ -1,5 +1,4 @@
 import streamlit as st
-from datetime import datetime
 import random
 import os
 from io import BytesIO
@@ -9,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # PDF
-from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -60,63 +59,56 @@ def 강약_분석(elements):
 # ================= 전문가 해설 =================
 def 오행_해설(elements, strong, weak):
     detail = {
-        "목": "목은 성장과 확장을 의미하며 이해력과 사고력과 연결됩니다.",
-        "화": "화는 집중력과 에너지로 몰입 학습과 관련됩니다.",
-        "토": "토는 안정성과 반복으로 꾸준함과 관련됩니다.",
-        "금": "금은 규칙과 구조로 문제풀이 능력과 연결됩니다.",
-        "수": "수는 기억과 사고로 암기력과 관련됩니다."
+        "목": "목은 성장과 확장 → 이해력, 사고력",
+        "화": "화는 에너지 → 집중력, 몰입",
+        "토": "토는 안정 → 꾸준함, 반복",
+        "금": "금은 구조 → 문제풀이, 시험력",
+        "수": "수는 기억 → 암기력, 응용"
     }
-
     return f"""
-이 사주는 {strong} 기운이 강하게 작용합니다.
+이 사주는 {strong} 기운이 강합니다.
 
-👉 {strong} 특징: {detail[strong]}
+👉 {strong}: {detail[strong]}
+👉 {weak} 부족 → {detail[weak]} 약점 가능
 
-반면 {weak} 기운이 부족하여 해당 영역은 약점이 될 수 있습니다.
-
-👉 {weak} 부족 영향: {detail[weak]}
-
-👉 핵심 전략: 강점 활용 + 약점 보완
+👉 핵심: 강점 활용 + 약점 보완
 """
 
 def 학습_스토리(strong, weak):
     return f"""
-이 학생은 {strong} 중심 학습 구조입니다.
+👉 {strong} 공부에서는 빠른 성과  
+👉 {weak} 공부에서는 효율 저하  
 
-👉 {strong} 기반 공부에서는 빠른 성과  
-👉 {weak} 기반 공부에서는 효율 저하
-
-👉 맞는 공부법이 성적을 결정합니다.
+👉 공부법이 성적을 결정하는 구조
 """
 
 def 총평(strong, weak):
     return f"""
-이 사주는 {strong} 중심 구조입니다.
+👉 {strong} 중심 사주  
 
-강점을 활용하면 빠르게 성장하지만  
-{weak} 부족은 장기 안정성을 떨어뜨립니다.
+강점 활용 시 상위권 가능  
+{weak} 부족 시 정체 가능  
 
-👉 결론: 전략적 공부 필수
+👉 전략적 공부 필수
 """
 
 def 행동_가이드(strong, weak):
     guide = {
         "목":"개념 중심 학습",
         "화":"짧고 강한 집중",
-        "토":"반복과 꾸준함",
-        "금":"문제풀이 중심",
+        "토":"반복 학습",
+        "금":"문제풀이 훈련",
         "수":"암기 반복"
     }
-
     return f"""
-✔ 추천 공부법: {guide[strong]}
-✔ 보완 전략: {guide[weak]}
+✔ 추천: {guide[strong]}  
+✔ 보완: {guide[weak]}  
 
-👉 강점 70% + 약점 30% 전략
+👉 70% 강점 + 30% 보완
 """
 
-# ================= 그래프 =================
-def 육각형_그래프(elements):
+# ================= 프리미엄 그래프 =================
+def 프리미엄_그래프(elements):
     labels = list(elements.keys())
     values = list(elements.values())
 
@@ -124,17 +116,20 @@ def 육각형_그래프(elements):
     angles = np.linspace(0, 2*np.pi, len(labels), endpoint=False).tolist()
     angles += angles[:1]
 
-    fig, ax = plt.subplots(subplot_kw=dict(polar=True))
-    ax.plot(angles, values)
-    ax.fill(angles, values, alpha=0.25)
+    fig, ax = plt.subplots(figsize=(5,5), subplot_kw=dict(polar=True))
 
+    ax.plot(angles, values, linewidth=2)
+    ax.fill(angles, values, alpha=0.3)
+
+    ax.set_facecolor("#f5f5f5")
+    ax.grid(True, linestyle="--", linewidth=0.5)
     ax.set_thetagrids(np.degrees(angles[:-1]), labels)
-    ax.set_title("오행 균형 그래프")
+    ax.set_title("오행 밸런스 분석", pad=20)
 
     return fig
 
-# ================= PDF =================
-def create_pdf(name, 사주, elements, strong, weak, 해설, 총평_text, 가이드):
+# ================= 프리미엄 PDF =================
+def create_premium_pdf(name, 사주, elements, strong, weak, 해설, 총평_text, 가이드):
     buffer = BytesIO()
     font_path = os.path.join(os.getcwd(), "NanumGothic.ttf")
 
@@ -151,15 +146,28 @@ def create_pdf(name, 사주, elements, strong, weak, 해설, 총평_text, 가이
 
     content = []
 
-    def add(text):
-        content.append(Paragraph(text.replace("\n","<br/>"), styles["Normal"]))
+    def title(text):
+        content.append(Paragraph(f"<b><font size=16>{text}</font></b>", styles["Normal"]))
+        content.append(Spacer(1, 12))
 
-    add(f"<b>{name} 학생 사주 분석 리포트</b><br/><br/>")
-    add(f"<b>사주:</b> {사주}<br/><br/>")
-    add(f"<b>오행:</b> {elements}<br/>강:{strong} / 약:{weak}<br/><br/>")
-    add(f"<b>오행 해설</b><br/>{해설}<br/><br/>")
-    add(f"<b>총평</b><br/>{총평_text}<br/><br/>")
-    add(f"<b>학습 전략</b><br/>{가이드}<br/><br/>")
+    def section(title_text, body):
+        content.append(Paragraph(f"<b><font size=12>{title_text}</font></b>", styles["Normal"]))
+        content.append(Spacer(1, 6))
+        content.append(Paragraph(body.replace("\n","<br/>"), styles["Normal"]))
+        content.append(Spacer(1, 12))
+
+    title(f"{name} 학생 프리미엄 사주 리포트")
+
+    section("🔮 사주팔자", str(사주))
+    section("🌿 오행 분석", f"{elements}<br/>강: {strong} / 약: {weak}")
+    section("📖 오행 해설", 해설)
+    section("🔮 총평", 총평_text)
+    section("📌 학습 전략", 가이드)
+
+    content.append(Paragraph(
+        "<b>✔ 결론: 맞는 공부법 적용 시 성적 상승 가능성이 매우 높습니다.</b>",
+        styles["Normal"]
+    ))
 
     doc.build(content)
     buffer.seek(0)
@@ -167,7 +175,7 @@ def create_pdf(name, 사주, elements, strong, weak, 해설, 총평_text, 가이
 
 # ================= UI =================
 st.set_page_config(page_title="학생 사주 분석", layout="centered")
-st.title("📚 학생 사주 기반 학습 분석 앱")
+st.title("📚 학생 사주 기반 학습 분석 (프리미엄)")
 
 with st.form("form"):
     year = st.number_input("출생년도", 2000, 2025, 2010)
@@ -183,19 +191,17 @@ if submit:
     사주 = [년주,월주,일주,시주]
 
     st.subheader("🔮 사주팔자")
-    st.write(f"{년주} / {월주} / {일주} / {시주}")
+    st.write(" / ".join(사주))
 
     elements = 오행_카운트(사주)
     strong, weak, level = 강약_분석(elements)
 
     st.subheader("🌿 오행 분석")
     st.write(elements)
-    st.write(f"강한 오행: {strong}")
-    st.write(f"약한 오행: {weak}")
-    st.write(f"균형 상태: {level}")
+    st.write(f"강: {strong} / 약: {weak} / 상태: {level}")
 
     st.subheader("📊 오행 시각화")
-    st.pyplot(육각형_그래프(elements))
+    st.pyplot(프리미엄_그래프(elements))
 
     st.subheader("📖 오행 해설")
     st.info(오행_해설(elements, strong, weak))
@@ -215,7 +221,7 @@ if submit:
     st.progress(today)
 
     # PDF
-    pdf = create_pdf(
+    pdf = create_premium_pdf(
         name,
         사주,
         elements,
@@ -227,6 +233,6 @@ if submit:
     )
 
     if pdf:
-        st.download_button("📄 프리미엄 PDF 다운로드", pdf, file_name=f"{name}_리포트.pdf")
+        st.download_button("💎 프리미엄 PDF 다운로드", pdf, file_name=f"{name}_리포트.pdf")
     else:
         st.error("⚠️ NanumGothic.ttf 파일 필요")
