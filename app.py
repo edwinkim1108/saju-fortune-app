@@ -33,67 +33,64 @@ if not st.session_state.login:
 천간 = ["갑","을","병","정","무","기","경","신","임","계"]
 지지 = ["자","축","인","묘","진","사","오","미","신","유","술","해"]
 
-# ================= 공부 타입 =================
-def 공부_타입(ilgan):
+# ================= 오행 =================
+def 오행_분석(일간):
     return {
-        "갑":"개념형","을":"반복형","병":"몰입형","정":"정리형",
-        "무":"지속형","기":"계획형","경":"문제풀이형","신":"정확형",
-        "임":"이해형","계":"암기형"
-    }.get(ilgan)
+        "갑":"목","을":"목","병":"화","정":"화",
+        "무":"토","기":"토","경":"금","신":"금",
+        "임":"수","계":"수"
+    }.get(일간)
 
-# ================= 풀이 =================
-def 공부_풀이(ilgan):
-    data = {
-        "갑": {"core":"성장과 확장","study":"개념 이해 강함","real":"설명하며 공부 시 성과 상승"},
-        "을": {"core":"꾸준함","study":"반복 학습 강함","real":"장기 학습에서 성적 상승"},
-        "병": {"core":"집중력","study":"몰입형","real":"짧고 강한 공부 효과적"},
-        "정": {"core":"디테일","study":"정확성 높음","real":"오답노트 효과 최고"},
-        "경": {"core":"분석력","study":"문제풀이 강함","real":"수학 상위권 가능"},
-        "신": {"core":"정밀함","study":"실수 적음","real":"정확도 기반 성적 상승"},
-        "임": {"core":"이해력","study":"응용 강함","real":"심화 문제 유리"},
-        "계": {"core":"암기력","study":"반복 강함","real":"단어/공식 암기 강점"},
-        "무": {"core":"지속력","study":"꾸준형","real":"시간 투자형 성과"},
-        "기": {"core":"계획력","study":"체계적","real":"플래너 활용 필수"}
+# ================= 학습 구조 =================
+def 학습_구조_분석(일간):
+    구조 = {
+        "목": {"type":"이해형","strength":"개념 연결 능력 우수","weak":"암기 약함"},
+        "화": {"type":"몰입형","strength":"집중력 강함","weak":"지속력 부족"},
+        "토": {"type":"꾸준형","strength":"지속력 강함","weak":"속도 느림"},
+        "금": {"type":"문제풀이형","strength":"시험형 문제 강함","weak":"개념 부족 위험"},
+        "수": {"type":"암기형","strength":"기억력 뛰어남","weak":"집중력 기복"}
     }
-    return data.get(ilgan)
+    return 구조.get(오행_분석(일간))
 
-# ================= 약점 =================
-def 약점_분석(ilgan):
-    return {
-        "병":"지루함에 약함",
-        "계":"이해 없이 암기 위험",
-        "경":"개념 부족 시 약함",
-        "을":"속도 느림"
-    }.get(ilgan, "균형형")
+# ================= 과목 성향 =================
+def 과목_성향(오행):
+    if 오행 == "목":
+        return {"국어":"독해 강점","영어":"이해력 우수","수학":"개념형 문제 강함"}
+    elif 오행 == "화":
+        return {"국어":"속독 강점","영어":"회화 강점","수학":"속도 빠름"}
+    elif 오행 == "토":
+        return {"국어":"꾸준 상승","영어":"암기 안정","수학":"기본기 강함"}
+    elif 오행 == "금":
+        return {"국어":"비문학 강점","영어":"문법 정확","수학":"문제풀이 최강"}
+    else:
+        return {"국어":"감각적 이해","영어":"암기 강점","수학":"응용 강함"}
 
 # ================= 부모 코칭 =================
-def 부모_코칭(ilgan):
+def 부모_코칭(일간):
     return {
-        "갑":["목표 중심 지도","자율성 부여"],
+        "갑":["목표 제시형 지도","자율성 중요"],
         "을":["습관 형성 중요","꾸준함 칭찬"],
-        "병":["짧은 목표 반복","칭찬 필수"],
-        "경":["문제풀이 강조","경쟁 환경 활용"],
+        "병":["짧은 목표 반복","즉각 피드백"],
+        "경":["문제풀이 중심 지도","경쟁 활용"],
         "계":["암기 환경 제공","반복 체크"]
-    }.get(ilgan, ["루틴 유지","기본기 강화"])
+    }.get(일간, ["루틴 유지","기본기 강화"])
 
-# ================= 성적 전략 =================
-def 성적_상승_전략(ilgan):
+# ================= 전략 =================
+def 성적_상승_전략(일간):
     return {
-        "경":"문제풀이 70% + 개념 30%",
-        "계":"암기 과목 집중 공략",
-        "병":"짧고 강하게 공부",
-        "을":"꾸준함 유지 핵심",
+        "경":"문제풀이 70% 전략",
+        "계":"암기 집중 전략",
+        "병":"짧고 강한 공부",
+        "을":"꾸준함 유지",
         "임":"이해 중심 학습"
-    }.get(ilgan, "기본기 + 반복")
+    }.get(일간, "기본기 + 반복")
 
-# ================= PDF (🔥 완전 해결 버전) =================
+# ================= PDF =================
 def create_pdf(name, text):
     buffer = BytesIO()
 
-    # 🔥 폰트 경로 자동 처리
     font_path = os.path.join(os.getcwd(), "NanumGothic.ttf")
 
-    # 🔥 폰트 존재 확인 (없으면 에러 방지)
     if not os.path.exists(font_path):
         return None
 
@@ -107,13 +104,10 @@ def create_pdf(name, text):
     styles["BodyText"].fontName = "Nanum"
 
     content = []
-
-    content.append(Paragraph(f"{name} 학생 리포트", styles["Title"]))
+    content.append(Paragraph(f"{name} 학생 분석 리포트", styles["Title"]))
     content.append(Paragraph("<br/>", styles["Normal"]))
 
-    # 줄바꿈 처리
     text = text.replace("\n", "<br/>")
-
     content.append(Paragraph(text, styles["BodyText"]))
 
     doc.build(content)
@@ -122,9 +116,9 @@ def create_pdf(name, text):
     return buffer
 
 # ================= UI =================
-st.set_page_config(page_title="📚 공부 사주 앱", layout="centered")
+st.set_page_config(page_title="📚 공부 사주 코칭", layout="centered")
 
-st.title("📚 학생 사주 공부 코칭 앱")
+st.title("📚 학생 사주 기반 공부 코칭 앱")
 
 with st.form("form"):
     year = st.number_input("출생년도", 2000, 2025, 2010)
@@ -132,69 +126,60 @@ with st.form("form"):
     day = st.number_input("일", 1, 31, 15)
     name = st.text_input("이름")
 
-    submit = st.form_submit_button("분석")
+    submit = st.form_submit_button("분석하기")
 
 if submit:
     일주 = 천간[(day)%10] + 지지[(day)%12]
     일간 = 일주[0]
 
+    오행 = 오행_분석(일간)
+    구조 = 학습_구조_분석(일간)
+    과목 = 과목_성향(오행)
+
     st.success(f"{name} 학생 분석 결과")
 
-    # 공부 타입
-    st.subheader("🧠 공부 타입")
-    st.info(공부_타입(일간))
+    # 핵심 분석
+    st.markdown("## 🧠 사주 기반 학습 구조 분석")
+    st.write(f"👉 오행: **{오행}**")
+    st.write(f"📌 유형: {구조['type']}")
+    st.write(f"💪 강점: {구조['strength']}")
+    st.write(f"⚠️ 약점: {구조['weak']}")
 
-    # 풀이
-    st.subheader("🔍 학습 능력 풀이")
-    analysis = 공부_풀이(일간)
-    st.write(f"🔹 핵심: {analysis['core']}")
-    st.write(f"🔹 특징: {analysis['study']}")
-    st.write(f"🔹 적용: {analysis['real']}")
-
-    st.warning("👉 올바른 공부 방법 적용 시 성적 상승 속도가 빠른 유형입니다.")
-
-    # 컨디션
-    st.subheader("📊 오늘 컨디션")
-    집중 = random.randint(60,95)
-    암기 = random.randint(50,90)
-
-    st.metric("집중력", f"{집중}%")
-    st.metric("암기력", f"{암기}%")
-    st.progress(집중)
+    # 과목
+    st.markdown("## 📚 과목별 성향")
+    for k, v in 과목.items():
+        st.write(f"{k} → {v}")
 
     # 전략
-    st.subheader("📈 성적 상승 전략")
+    st.markdown("## 📈 성적 상승 전략")
     st.success(성적_상승_전략(일간))
 
-    # 약점
-    st.subheader("⚠️ 학습 약점")
-    st.error(약점_분석(일간))
-
-    # 부모 코칭
-    st.subheader("👨‍👩‍👧 부모 코칭")
+    # 부모
+    st.markdown("## 👨‍👩‍👧 부모 코칭")
     for c in 부모_코칭(일간):
         st.write(f"👉 {c}")
 
-    # 오늘 전략
-    전략 = random.choice([
-        "복습 중심 학습",
-        "문제풀이 집중",
-        "암기 과목 공략"
-    ])
-    st.info(f"👉 오늘 전략: {전략}")
+    # 컨디션
+    st.markdown("## 📊 오늘 컨디션")
+    집중 = random.randint(60,95)
+    st.metric("집중력", f"{집중}%")
+    st.progress(집중)
 
-    # PDF 내용
+    st.info("👉 이 학생은 맞는 학습법 적용 시 성적 상승 가능성이 매우 높은 구조입니다.")
+
+    # PDF
     text = f"""
-    [학생 분석]
+    [핵심 분석]
+    오행: {오행}
+    유형: {구조['type']}
+    강점: {구조['strength']}
+    약점: {구조['weak']}
 
-    공부 유형: {공부_타입(일간)}
+    [과목 성향]
+    {과목}
 
-    핵심: {analysis['core']}
-    특징: {analysis['study']}
-    적용: {analysis['real']}
-
-    성적 전략: {성적_상승_전략(일간)}
-    약점: {약점_분석(일간)}
+    [전략]
+    {성적_상승_전략(일간)}
     """
 
     pdf = create_pdf(name, text)
@@ -207,4 +192,4 @@ if submit:
             mime="application/pdf"
         )
     else:
-        st.error("⚠️ NanumGothic.ttf 폰트 파일을 추가해야 PDF가 정상 생성됩니다.")
+        st.error("⚠️ NanumGothic.ttf 폰트 파일 필요")
