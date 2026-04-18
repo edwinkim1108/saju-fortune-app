@@ -1,0 +1,191 @@
+import { sha256 } from 'js-sha256';
+
+// ================= 1. 방대한 명리 지식 베이스 (Expert System DB) =================
+
+export const KAN_DETAILS: Record<string, { 
+  elem: string; 
+  ten_god: string; 
+  title: string;
+  personality: string; 
+  strength: string;
+  weakness: string;
+}> = {
+  "갑": { 
+    elem: "목", ten_god: "비겁", title: "하늘을 향해 뻗는 거목 (甲木)",
+    personality: "독립심과 추진력이 매우 강하며, 기질적으로 리더의 자질을 타고났습니다. 굽히기보다는 직접 돌파하는 성격입니다.",
+    strength: "한 번 정한 목표에 대한 집중력이 뛰어나며 대범한 기개를 가졌습니다.",
+    weakness: "융통성이 부족해 보일 수 있으며, 실패 시 좌절감이 다른 이들보다 크게 다가올 수 있습니다."
+  },
+  "을": { 
+    elem: "목", ten_god: "비겁", title: "생명력을 품은 유연한 덩굴 (乙木)",
+    personality: "겉으로는 부드러워 보이나 내면은 끈질긴 생명력과 적응력을 가지고 있습니다. 환경 변화에 민감하고 실속이 있습니다.",
+    strength: "세밀한 관찰력과 대인관계에서의 유연함이 돋보입니다.",
+    weakness: "자신의 주관을 겉으로 잘 드러내지 않아 속내를 알기 어렵고 우유부단하게 보일 수 있습니다."
+  },
+  "병": { 
+    elem: "화", ten_god: "식상", title: "세상을 비추는 강렬한 태양 (丙火)",
+    personality: "화끈하고 정열적이며 매사에 긍정적입니다. 숨김이 없고 솔선수범하여 주변에 활기를 불어넣는 에너자이저입니다.",
+    strength: "도전 정신이 강하고 표현력이 풍부하여 예술이나 방송 분야에 두각을 나타냅니다.",
+    weakness: "성격이 급해 실수를 할 수 있으며 감정 기복이 다소 큰 편입니다."
+  },
+  "정": { 
+    elem: "화", ten_god: "식상", title: "어둠을 밝히는 은은한 촛불 (丁火)",
+    personality: "따뜻하고 배려심이 깊으며 내면이 매우 치밀하고 섬세합니다. 헌신적이고 예술적인 감수성이 풍부합니다.",
+    strength: "한 분야를 깊이 파고드는 연구심과 정밀한 분석 능력이 전문 영역에서 빛을 발합니다.",
+    weakness: "예민한 감각으로 인해 스트레스를 잘 받으며 소심해질 때가 있습니다."
+  },
+  "무": { 
+    elem: "토", ten_god: "재성", title: "모든 것을 품는 광활한 대지 (戊土)",
+    personality: "듬직하고 신뢰감이 있으며 변화에 흔들리지 않는 굳건함을 가졌습니다. 중재 능력이 좋고 포용력이 큽니다.",
+    strength: "안정적인 현실 감각과 책임감이 뛰어나 조직의 기틀을 잡는 데 능합니다.",
+    weakness: "다소 고집스럽고 보수적일 수 있으며 행동이 신중한 만큼 느릿하게 보일 수 있습니다."
+  },
+  "기": { 
+    elem: "토", ten_god: "재성", title: "생명을 길러내는 옥토 (己土)",
+    personality: "성실하고 알뜰하며 세심한 성격입니다. 남을 챙기는 마음이 지극하고 교육이나 관리 업무에 적합합니다.",
+    strength: "실리를 챙기는 감각이 탁월하고 실수가 적으며 맡은 일을 끝까지 완수합니다.",
+    weakness: "의심이 많고 생각이 너무 깊어 기회를 놓치는 경우가 종종 있습니다."
+  },
+  "경": { 
+    elem: "금", ten_god: "관성", title: "강직한 기운의 무쇠와 원석 (庚金)",
+    personality: "의리가 깊고 결단력이 있으며 공과 사를 아주 엄격히 구분합니다. 원칙을 중시하고 불의를 참지 못합니다.",
+    strength: "검경, 법률, 군사 계통이나 강력한 구조가 필요한 조직에서 최고의 능력을 보입니다.",
+    weakness: "지나치게 강압적이거나 차가운 인상을 줄 수 있어 인간관계에서 적을 만들기 쉽습니다."
+  },
+  "신": { 
+    elem: "금", ten_god: "관성", title: "눈부시게 연마된 보석과 칼날 (辛金)",
+    personality: "섬세하고 날카로우며 깔끔한 성품입니다. 완벽주의자 성향이 강하고 미적 감각이 매우 뛰어납니다.",
+    strength: "정밀 기술, IT, 디자인 등 전문적인 분야에서 독보적인 정확성을 보여줍니다.",
+    weakness: "자존감이 매우 높아 주변의 비판에 과하게 민감하게 반응할 수 있습니다."
+  },
+  "임": { 
+    elem: "수", ten_god: "인성", title: "모든 물을 받아들이는 대양 (壬水)",
+    personality: "지혜롭고 통찰력이 깊으며 만물을 포용하는 넓은 마음을 가졌습니다. 유연한 사고로 상황 대처 능력이 좋습니다.",
+    strength: "기획력과 경영 능력이 출중하며 거시적인 안목으로 미래를 내다봅니다.",
+    weakness: "방랑기가 있고 감추는 것이 많아 비밀스럽다는 평을 듣기 쉽습니다."
+  },
+  "계": { 
+    elem: "수", ten_god: "인성", title: "하늘에서 내리는 지혜로운 이슬 (癸水)",
+    personality: "유연하고 임기응변에 능하며 지적 탐구심이 매우 강합니다. 조용하지만 내실이 깊은 전략가 타입입니다.",
+    strength: "상대방의 마음을 읽는 심리적 통찰력과 학문에 대한 깊은 이해도가 높습니다.",
+    weakness: "환경의 영향을 너무 많이 받으며 정서적으로 다소 불안정할 수 있습니다."
+  }
+};
+
+export const ELEMENT_ADVICE: Record<string, { excess: string; lack: string }> = {
+  "목": {
+    excess: "주관이 너무 강해 독단적일 수 있으니 타인의 의견을 경청하는 연습이 필요합니다.",
+    lack: "추진력이 부족할 수 있으니 작은 목표부터 실행하는 습관을 들여 에너지를 키우세요."
+  },
+  "화": {
+    excess: "감정 조절에 유의하고 서두르는 습관을 버려 마음의 평화를 찾는 것이 중요합니다.",
+    lack: "열정과 활동성이 떨어질 수 있으니 운동이나 활동적인 취미로 에너지를 보충하세요."
+  },
+  "토": {
+    excess: "생각이 너무 많아 행동이 지체될 수 있으니 신속한 의사결정 연습이 필요합니다.",
+    lack: "기초가 흔들릴 수 있으니 원칙을 지키고 신뢰를 쌓는 일에 집중하세요."
+  },
+  "금": {
+    excess: "주변에 너무 날카로운 태도를 보이지 않도록 부드러운 대화 기법을 익히세요.",
+    lack: "맺고 끊음이 약할 수 있으니 냉철한 판단이 필요한 순간에는 과감해져야 합니다."
+  },
+  "수": {
+    excess: "생각이 한 곳에 정체되지 않도록 야외 활동을 통해 기분을 전환하세요.",
+    lack: "지혜와 인내가 부족하게 느껴질 때 명상이나 독서를 통해 내실을 다지세요."
+  }
+};
+
+export const STRATEGY_DETAILS: Record<string, string> = {
+  "비겁": "본인의 자존감을 건드리는 경쟁 구도나 보상이 주어질 때 무서운 속도로 학습 효율이 오릅니다. 스스로 스케줄을 짜게 하세요.",
+  "식상": "창의성이 필요한 과목에 강점이 있습니다. 암기보다는 원리를 이해하고 직접 설명해 보는 방식이 머리에 오래 남습니다.",
+  "재성": "학습 결과가 눈에 보이는 숫자로 나타날 때(성적표, 시험 등) 동기부여가 확실합니다. 구체적인 보상 체계를 활용하세요.",
+  "관성": "규칙적인 시간표와 체계적인 시스템 아래서 가장 안정적으로 공부합니다. 학원이나 관리형 독서실이 잘 맞을 수 있습니다.",
+  "인성": "배우는 과정을 즐기는 타입입니다. 배경 지식이 탄탄하게 설명된 책이나 깊이 있는 인강을 선호하며 심화 학습에서 두각을 발휘합니다."
+};
+
+// ================= 2. 확장된 분석 엔진 (Expert Logic) =================
+
+export class IntegratedSajuEngine {
+  name: string;
+  gender: string;
+  birthDate: string;
+  birthTime: string;
+  seedHash: bigint;
+  ilGan: string;
+  elements: Record<string, number>;
+  strength: number;
+
+  constructor(name: string, gender: string, birthDate: string, birthTime: string) {
+    this.name = name;
+    this.gender = gender;
+    this.birthDate = birthDate;
+    this.birthTime = birthTime;
+
+    const seedStr = `${birthDate}${birthTime}${gender}${name}`;
+    const hash = sha256(seedStr);
+    this.seedHash = BigInt(`0x${hash}`);
+
+    const kanList = Object.keys(KAN_DETAILS);
+    const index = Number(this.seedHash % 10n);
+    this.ilGan = kanList[index];
+
+    this.elements = this._calculateElements();
+    this.strength = Number((this.seedHash % 61n)) - 30;
+  }
+
+  private _calculateElements(): Record<string, number> {
+    const h = this.seedHash;
+    return {
+      "목": Number((h % 20n) + 15n),
+      "화": Number(((h >> 4n) % 20n) + 15n),
+      "토": Number(((h >> 8n) % 20n) + 15n),
+      "금": Number(((h >> 12n) % 20n) + 15n),
+      "수": Number(((h >> 16n) % 20n) + 15n)
+    };
+  }
+
+  // API 없이 로컬에서 고품질 리포트 생성
+  generateLocalReport(): string {
+    const kanData = KAN_DETAILS[this.ilGan];
+    const maxElem = Object.keys(this.elements).reduce((a, b) => this.elements[a] > this.elements[b] ? a : b);
+    const minElem = Object.keys(this.elements).reduce((a, b) => this.elements[a] < this.elements[b] ? a : b);
+    
+    return `
+## **[천부적 기질과 성품 - 오행(五行)의 미학]**
+
+${this.name} 님의 타고난 기운은 **${kanData.title}**입니다. 
+명리학적 관점에서 볼 때, 귀하는 **${kanData.personality}**라는 독특한 성품을 가졌습니다. 
+
+특히 **${kanData.elem}**의 에너지가 귀하의 자아를 형성하는 주된 동력입니다.
+- **주요 강점:** ${kanData.strength}
+- **보완할 점:** ${kanData.weakness}
+
+## **[에너지 밸런스와 오행의 상호작용]**
+
+귀하의 오행 분포를 정밀 분석한 결과, **${maxElem}**의 기운이 가장 왕성하고 **${minElem}**의 기운이 다소 부족한 상태입니다.
+
+- **${maxElem} 기운의 영향:** ${ELEMENT_ADVICE[maxElem].excess}
+- **${minElem} 기운의 보충 전략:** ${ELEMENT_ADVICE[minElem].lack}
+
+이러한 에너지 불균형은 특정 상황에서 감정의 기복이나 판단의 근거로 작용하게 됩니다. 상생(相生)의 원리에 따라 부족한 기운을 일상에서 채워나가는 것이 삶의 균형을 잡는 핵심입니다.
+
+## **[재물운과 사회적 성취 - 비즈니스 명리]**
+
+귀하는 **${kanData.ten_god}**성 기질이 발달되어 있습니다. 이는 조직 내에서 탁월한 적응력을 보이거나, 혹은 독보적인 전문성을 발휘하여 재물을 모으는 재능이 있음을 시사합니다.
+
+- **최적의 직업군:** ${this.strength > 0 ? "리더쉽이 필요한 경영, 전문 기술, 창업 분야" : "전략적 기획, 행정 관리, 전문 컨설팅 분야"}
+- **재물운 조언:** 꾸준히 실속을 챙기는 관리 능력이 뛰어나므로, 단기적인 큰 이익보다는 장기적인 자산 가치 상승에 집중하는 것이 유리합니다.
+
+## **[학습 및 자기계발 전략]**
+
+- **학습 스타일:** ${STRATEGY_DETAILS[kanData.ten_god]}
+- **집중력 강화:** 귀하의 일간 기운을 활성화할 수 있는 정적인 공간에서의 심화 학습이 성취도를 높이는 열쇠입니다.
+
+## **[귀인과 행운의 에너지]**
+
+- **귀인(인연):** 귀하에게 영감을 줄 수 있는 **${maxElem === '목' || maxElem === '화' ? '수(水)나 금(金)' : '목(木)이나 화(火)'}**의 기운을 가진 사람과 가까이 하세요.
+- **행운의 방위:** ${['수','목'].includes(kanData.elem) ? "북쪽과 동쪽" : "남쪽과 서쪽"}
+- **행운의 색상/숫자:** ${['수','목'].includes(kanData.elem) ? "청색, 흑색 / 1, 3" : "백색, 황색 / 4, 7"}
+    `;
+  }
+}

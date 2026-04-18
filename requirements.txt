@@ -1,6 +1,3 @@
 streamlit
-reportlab
-matplotlib
-numpy
 plotly
 pandas
